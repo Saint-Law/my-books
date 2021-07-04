@@ -2,11 +2,14 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using my_books.Data;
+using my_books.Data.Service;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,9 +19,11 @@ namespace my_books
 {
     public class Startup
     {
+        public string ConnectionString { get; set; }
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
+            ConnectionString = configuration.GetConnectionString("DefualtConnectionString");
         }
 
         public IConfiguration Configuration { get; }
@@ -28,11 +33,19 @@ namespace my_books
         {
 
             services.AddControllers();
+
+            //Configure DbContext with SQL
+            services.AddDbContext<AppDbContext>(options => options.UseSqlServer(ConnectionString));
+
+            //Configure the service
+            services.AddTransient<BooksService>();
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "my_books", Version = "v1" });
             });
         }
+
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
